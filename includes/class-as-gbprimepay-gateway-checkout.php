@@ -29,6 +29,9 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
         $this->payment_settings_qrcode = get_option('gbprimepay_payment_settings_qrcode');
         $this->payment_settings_qrcredit = get_option('gbprimepay_payment_settings_qrcredit');
         $this->payment_settings_qrwechat = get_option('gbprimepay_payment_settings_qrwechat');
+        $this->payment_settings_linepay = get_option('gbprimepay_payment_settings_linepay');
+        $this->payment_settings_truewallet = get_option('gbprimepay_payment_settings_truewallet');
+        $this->payment_settings_mbanking = get_option('gbprimepay_payment_settings_mbanking');
         $this->payment_settings_barcode = get_option('gbprimepay_payment_settings_barcode');
 
         $this->title = $this->payment_settings_checkout['title'];
@@ -158,6 +161,9 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                     $payment_settings_qrcode = get_option('gbprimepay_payment_settings_qrcode');
                     $payment_settings_qrcredit = get_option('gbprimepay_payment_settings_qrcredit');
                     $payment_settings_qrwechat = get_option('gbprimepay_payment_settings_qrwechat');
+                    $payment_settings_linepay = get_option('gbprimepay_payment_settings_linepay');
+                    $payment_settings_truewallet = get_option('gbprimepay_payment_settings_truewallet');
+                    $payment_settings_mbanking = get_option('gbprimepay_payment_settings_mbanking');
                     $payment_settings_barcode = get_option('gbprimepay_payment_settings_barcode');
 
                     if ($account_settings['environment'] === 'prelive') {
@@ -216,6 +222,27 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                         $init_gbp['init_gateways']['qrwechat'] = array(
                             "enabled" => $payment_settings_qrwechat['enabled'],
                             "display" => $payment_settings_qrwechat['title'],
+                        ); 
+                    }
+
+                    if ($payment_settings_linepay['enabled'] === 'yes') {
+                        $init_gbp['init_gateways']['linepay'] = array(
+                            "enabled" => $payment_settings_linepay['enabled'],
+                            "display" => $payment_settings_linepay['title'],
+                        ); 
+                    }
+
+                    if ($payment_settings_truewallet['enabled'] === 'yes') {
+                        $init_gbp['init_gateways']['truewallet'] = array(
+                            "enabled" => $payment_settings_truewallet['enabled'],
+                            "display" => $payment_settings_truewallet['title'],
+                        ); 
+                    }
+
+                    if ($payment_settings_mbanking['enabled'] === 'yes') {
+                        $init_gbp['init_gateways']['mbanking'] = array(
+                            "enabled" => $payment_settings_mbanking['enabled'],
+                            "display" => $payment_settings_mbanking['title'],
                         ); 
                     }
 
@@ -656,6 +683,117 @@ AS_Gbprimepay::log(  'QR Wechat Return Handler: ' .$url.'\r\n\r\n'. print_r( $ch
 
       }
     }
+    if($paymentType=='L'){
+    // Rabbit Line Pay
+    if ( isset( $postData['resultCode'] ) ) {
+        if ($postData['resultCode'] == '00') {
+                        $order->payment_complete($postData['gbpReferenceNo']);
+                        update_post_meta($order_id, 'Gbprimepay Charge ID', $postData['merchantDefined1']);
+                        $order->add_order_note(
+                          __( 'GBPrimePay Rabbit Line Pay Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
+                          __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
+                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                        );
+
+// checkout_afterpay_url
+$checkoutmethod = 'linepay';
+$checkoutshoprefNo = $ordertxt;
+$checkoutserialID = $postData['merchantDefined1'];
+$checkoutID = $postData['merchantDefined5'];
+$checkoutgbpReferenceNo = $postData['gbpReferenceNo'];
+$checkoutamount = $postData['amount'];
+$checkoutdate = $postData['date'];
+$checkouttime = $postData['time'];
+$url = $checkout_url.'/afterpay/'.$checkoutID;
+$field = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"referenceNo\"\r\n\r\n$referenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"method\"\r\n\r\n$checkoutmethod\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gbpReferenceNo\"\r\n\r\n$checkoutgbpReferenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"amount\"\r\n\r\n$checkoutamount\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"date\"\r\n\r\n$checkoutdate\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"time\"\r\n\r\n$checkouttime\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"shoprefNo\"\r\n\r\n$checkoutshoprefNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"serialID\"\r\n\r\n$checkoutserialID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"checkoutID\"\r\n\r\n$checkoutID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--";
+
+$checkoutReturn = AS_Gbprimepay_API::afterpayCheckout("$url", $field, 'POST');
+
+
+AS_Gbprimepay::log(  'Rabbit Line Pay Return Handler: ' .$url.'\r\n\r\n'. print_r( $checkoutReturn, true ) );
+                }else{
+                    if ($order->has_status(array('pending', 'failed'))) {
+                        $order->update_status( 'failed', sprintf( __( 'GBPrimePay Rabbit Line Pay Payment failed.', 'gbprimepay-payment-gateways' ) ) );
+                    }
+                }
+            AS_Gbprimepay::log(  'Rabbit Line Pay Callback Handler: ' . print_r( $postData, true ) );
+
+      }
+    }
+    if($paymentType=='T'){
+    // TrueMoney Wallet
+    if ( isset( $postData['resultCode'] ) ) {
+        if ($postData['resultCode'] == '00') {
+                        $order->payment_complete($postData['gbpReferenceNo']);
+                        update_post_meta($order_id, 'Gbprimepay Charge ID', $postData['merchantDefined1']);
+                        $order->add_order_note(
+                          __( 'GBPrimePay TrueMoney Wallet Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
+                          __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
+                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                        );
+
+// checkout_afterpay_url
+$checkoutmethod = 'truewallet';
+$checkoutshoprefNo = $ordertxt;
+$checkoutserialID = $postData['merchantDefined1'];
+$checkoutID = $postData['merchantDefined5'];
+$checkoutgbpReferenceNo = $postData['gbpReferenceNo'];
+$checkoutamount = $postData['amount'];
+$checkoutdate = $postData['date'];
+$checkouttime = $postData['time'];
+$url = $checkout_url.'/afterpay/'.$checkoutID;
+$field = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"referenceNo\"\r\n\r\n$referenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"method\"\r\n\r\n$checkoutmethod\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gbpReferenceNo\"\r\n\r\n$checkoutgbpReferenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"amount\"\r\n\r\n$checkoutamount\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"date\"\r\n\r\n$checkoutdate\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"time\"\r\n\r\n$checkouttime\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"shoprefNo\"\r\n\r\n$checkoutshoprefNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"serialID\"\r\n\r\n$checkoutserialID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"checkoutID\"\r\n\r\n$checkoutID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--";
+
+$checkoutReturn = AS_Gbprimepay_API::afterpayCheckout("$url", $field, 'POST');
+
+
+AS_Gbprimepay::log(  'TrueMoney Wallet Return Handler: ' .$url.'\r\n\r\n'. print_r( $checkoutReturn, true ) );
+                }else{
+                    if ($order->has_status(array('pending', 'failed'))) {
+                        $order->update_status( 'failed', sprintf( __( 'GBPrimePay TrueMoney Wallet Payment failed.', 'gbprimepay-payment-gateways' ) ) );
+                    }
+                }
+            AS_Gbprimepay::log(  'TrueMoney Wallet Callback Handler: ' . print_r( $postData, true ) );
+
+      }
+    }
+    if($paymentType=='M'){
+    // Mobile Banking
+    if ( isset( $postData['resultCode'] ) ) {
+        if ($postData['resultCode'] == '00') {
+                        $order->payment_complete($postData['gbpReferenceNo']);
+                        update_post_meta($order_id, 'Gbprimepay Charge ID', $postData['merchantDefined1']);
+                        $order->add_order_note(
+                          __( 'GBPrimePay Mobile Banking Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
+                          __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
+                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                        );
+
+// checkout_afterpay_url
+$checkoutmethod = 'mbanking';
+$checkoutshoprefNo = $ordertxt;
+$checkoutserialID = $postData['merchantDefined1'];
+$checkoutID = $postData['merchantDefined5'];
+$checkoutgbpReferenceNo = $postData['gbpReferenceNo'];
+$checkoutamount = $postData['amount'];
+$checkoutdate = $postData['date'];
+$checkouttime = $postData['time'];
+$url = $checkout_url.'/afterpay/'.$checkoutID;
+$field = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"referenceNo\"\r\n\r\n$referenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"method\"\r\n\r\n$checkoutmethod\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gbpReferenceNo\"\r\n\r\n$checkoutgbpReferenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"amount\"\r\n\r\n$checkoutamount\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"date\"\r\n\r\n$checkoutdate\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"time\"\r\n\r\n$checkouttime\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"shoprefNo\"\r\n\r\n$checkoutshoprefNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"serialID\"\r\n\r\n$checkoutserialID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"checkoutID\"\r\n\r\n$checkoutID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--";
+
+$checkoutReturn = AS_Gbprimepay_API::afterpayCheckout("$url", $field, 'POST');
+
+
+AS_Gbprimepay::log(  'Mobile Banking Return Handler: ' .$url.'\r\n\r\n'. print_r( $checkoutReturn, true ) );
+                }else{
+                    if ($order->has_status(array('pending', 'failed'))) {
+                        $order->update_status( 'failed', sprintf( __( 'GBPrimePay Mobile Banking Payment failed.', 'gbprimepay-payment-gateways' ) ) );
+                    }
+                }
+            AS_Gbprimepay::log(  'Mobile Banking Callback Handler: ' . print_r( $postData, true ) );
+
+      }
+    }
 
     }
 }
@@ -730,6 +868,34 @@ if( $gateways ) {
                 if ($this->payment_settings_qrwechat['enabled'] === 'yes') {
                   $sortGateways[] = 'qrwechat';
                   $sortGatewaysTXT[] = 'QR Wechat';
+                  }
+      
+            }
+            if( $gateway == 'gbprimepay_linepay') {
+                if ($this->payment_settings_linepay['enabled'] === 'yes') {
+                  $sortGateways[] = 'linepay';
+                  $sortGatewaysTXT[] = 'Rabbit Line Pay';
+                  }
+      
+            }
+            if( $gateway == 'gbprimepay_truewallet') {
+                if ($this->payment_settings_truewallet['enabled'] === 'yes') {
+                  $sortGateways[] = 'truewallet';
+                  $sortGatewaysTXT[] = 'TrueMoney Wallet';
+                  }
+      
+            }
+            if( $gateway == 'gbprimepay_mbanking') {
+
+                if ($this->payment_settings_mbanking['enabled'] === 'yes') {
+                    
+                    if((WC()->cart->total >= 20) && ($this->account_settings['environment']=='production')){
+ 
+                $sortGateways[] = 'mbanking';
+                $sortGatewaysTXT[] = 'Mobile Banking';
+                
+                    }
+                
                   }
       
             }
