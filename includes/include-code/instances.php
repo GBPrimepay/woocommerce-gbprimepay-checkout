@@ -1,5 +1,4 @@
 <?php
-
 function gbp_instances( $instances ) {
     $inc = array(
     '3D_SECURE_PAYMENT' => TRUE,    // Enabling 3-D Secure payment(TRUE/FALSE).
@@ -9,7 +8,6 @@ function gbp_instances( $instances ) {
     'PLATFORM' => 'woocommerce',
     'MODE' => 'payment',
     'STATUS' => 'draft',
-
     'URL_CHECKOUT_TEST' => 'https://checkout.globalprimepay.com',
     'URL_CHECKOUT_LIVE' => 'https://checkout.gbprimepay.com',
 
@@ -21,10 +19,9 @@ function gbp_instances( $instances ) {
 
     'URL_CHECKPRIVATEKEY_TEST' => 'https://api.globalprimepay.com/checkPrivateKey',
     'URL_CHECKPRIVATEKEY_LIVE' => 'https://api.gbprimepay.com/checkPrivateKey',
-
+    
     'URL_CHECKCUSTOMERKEY_TEST' => 'https://api.globalprimepay.com/checkCustomerKey',
     'URL_CHECKCUSTOMERKEY_LIVE' => 'https://api.gbprimepay.com/checkCustomerKey',
-
 );
 $inc_code = isset( $inc[$instances] ) ? $inc[$instances] : $instances;
 return $inc_code;

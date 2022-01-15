@@ -203,6 +203,7 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                             "ayudhya_installment_term" => $payment_settings_installment['ayudhya_installment_term'],
                             "firstchoice_installment_term" => $payment_settings_installment['firstchoice_installment_term'],
                             "scb_installment_term" => $payment_settings_installment['scb_installment_term'],
+                            "bbl_installment_term" => $payment_settings_installment['bbl_installment_term'],
                         ); 
                     }
                     if ($payment_settings_qrcode['enabled'] === 'yes') {
@@ -835,7 +836,7 @@ if( $gateways ) {
 
                 if ($this->payment_settings_installment['enabled'] === 'yes') {
                 
-                    $all_installment_term = $this->payment_settings_installment['kasikorn_installment_term'].', '.$this->payment_settings_installment['krungthai_installment_term'].', '.$this->payment_settings_installment['thanachart_installment_term'].', '.$this->payment_settings_installment['ayudhya_installment_term'].', '.$this->payment_settings_installment['firstchoice_installment_term'].', '.$this->payment_settings_installment['scb_installment_term'];
+                    $all_installment_term = $this->payment_settings_installment['kasikorn_installment_term'].', '.$this->payment_settings_installment['krungthai_installment_term'].', '.$this->payment_settings_installment['thanachart_installment_term'].', '.$this->payment_settings_installment['ayudhya_installment_term'].', '.$this->payment_settings_installment['firstchoice_installment_term'].', '.$this->payment_settings_installment['scb_installment_term'].', '.$this->payment_settings_installment['bbl_installment_term'];
                 
                     $all_arrterm_check = explode(',',preg_replace('/\s+/', '', $all_installment_term));
                     $all_arrterm_pass = (array_filter($all_arrterm_check));
