@@ -44,7 +44,8 @@ To use the GBPrimePay Checkout, you'll first need to [register for an GBPrimePay
 
 
 
-1. Download the plugin.
+1. Download the GBPrimePay Checkout for WooCommerce .zip file of the latest release from here:
+https://github.com/GBPrimepay/woocommerce-gbprimepay-checkout/releases
 
 2. Upload the plugin files to the `/wp-content/plugins/` directory.
 
