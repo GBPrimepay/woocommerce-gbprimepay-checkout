@@ -22,7 +22,7 @@ License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
 
 
-GBPrimePay Checkout By GBPrimePay, Accept Credit Card, Credit Card Installment, QR Code, QR Visa, Qr Wechat, Bill Payment,  Rabbit Line Pay, TrueMoney Wallet and Mobile Banking on WooCommerce store with [GBPrimePay Payments](https://www.gbprimepay.com/)
+GBPrimePay Checkout By GBPrimePay, Accept Credit Card, Credit Card Installment, QR Code, QR Visa, Qr Wechat, Bill Payment,  Rabbit Line Pay, TrueMoney Wallet, Atome, ShopeePay and Mobile Banking on WooCommerce store with [GBPrimePay Payments](https://www.gbprimepay.com/)
 
 
 
@@ -63,7 +63,7 @@ https://github.com/GBPrimepay/woocommerce-gbprimepay-checkout/releases
 
 == Changelog ==
 
-= 1.2.0 =
+= 1.3.0 =
 
 
 

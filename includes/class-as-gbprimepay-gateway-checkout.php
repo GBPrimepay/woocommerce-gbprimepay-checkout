@@ -32,6 +32,8 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
         $this->payment_settings_linepay = get_option('gbprimepay_payment_settings_linepay');
         $this->payment_settings_truewallet = get_option('gbprimepay_payment_settings_truewallet');
         $this->payment_settings_mbanking = get_option('gbprimepay_payment_settings_mbanking');
+        $this->payment_settings_atome = get_option('gbprimepay_payment_settings_atome');
+        $this->payment_settings_shopeepay = get_option('gbprimepay_payment_settings_shopeepay');
         $this->payment_settings_barcode = get_option('gbprimepay_payment_settings_barcode');
 
         $this->title = $this->payment_settings_checkout['title'];
@@ -164,6 +166,8 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                     $payment_settings_linepay = get_option('gbprimepay_payment_settings_linepay');
                     $payment_settings_truewallet = get_option('gbprimepay_payment_settings_truewallet');
                     $payment_settings_mbanking = get_option('gbprimepay_payment_settings_mbanking');
+                    $payment_settings_atome = get_option('gbprimepay_payment_settings_atome');
+                    $payment_settings_shopeepay = get_option('gbprimepay_payment_settings_shopeepay');
                     $payment_settings_barcode = get_option('gbprimepay_payment_settings_barcode');
 
                     if ($account_settings['environment'] === 'prelive') {
@@ -246,6 +250,18 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                             "display" => $payment_settings_mbanking['title'],
                         ); 
                     }
+                    if ($payment_settings_atome['enabled'] === 'yes') {
+                        $init_gbp['init_gateways']['atome'] = array(
+                            "enabled" => $payment_settings_atome['enabled'],
+                            "display" => $payment_settings_atome['title'],
+                        ); 
+                    }
+                    if ($payment_settings_shopeepay['enabled'] === 'yes') {
+                        $init_gbp['init_gateways']['shopeepay'] = array(
+                            "enabled" => $payment_settings_shopeepay['enabled'],
+                            "display" => $payment_settings_shopeepay['title'],
+                        ); 
+                    }
 
                     if ($payment_settings_barcode['enabled'] === 'yes') {
                         $init_gbp['init_gateways']['barcode'] = array(
@@ -273,7 +289,6 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                     $checkout_status = gbp_instances('STATUS');
                     $checkout_environment = $account_settings['environment'];
                     $checkout_language = AS_Gbprimepay_API::getCurrentLanguage();
-                    $checkout_currency_iso = AS_Gbprimepay_API::getCurrencyISO();
                     $checkout_domain = AS_Gbprimepay_API::getDomain();
                     $callgenerateID = AS_Gbprimepay_API::generateID();
                     $checkout_otpCode = 'Y';
@@ -340,11 +355,9 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                             "customer_address" => $checkout_customerAddress,
                             "customer_telephone" => $checkout_customerTelephone,
                         ); 
-                        $currency_data = array(
-                            "currencyCode" => '764',
-                            "currencySign" => '฿',
-                            "currencyISO" => $checkout_currency_iso,
-                        ); 
+
+                        $currency_data = AS_Gbprimepay_API::genCurrencyDATA($checkout_language,$merchant_data);
+
                     $RedirectURL =  add_query_arg(
                                     array(
                                         'page' => rawurlencode($checkout_url),
@@ -444,6 +457,7 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
 
     $referenceNo = $payload->{'referenceNo'};
     $order_id = substr($payload->{'referenceNo'}, 7);
+    $currencyISO = AS_Gbprimepay_API::getCurrencyISObyCode($payload->{'currencyCode'});
     $order = wc_get_order($order_id);
     $ordertxt = '';
     if ($order){$ordertxt = $order->get_id();}
@@ -457,7 +471,7 @@ if(strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0){
                 $order->add_order_note(
                   __( 'GBPrimePay QR Code Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                   __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $payload->{'gbpReferenceNo'} . PHP_EOL .
-                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'})
+                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'}, array('currency' => ''.$currencyISO))
                 );
 
 // checkout_afterpay_url
@@ -485,6 +499,82 @@ AS_Gbprimepay::log(  'QR Code Return Handler: ' .$url.'\r\n\r\n'. print_r( $chec
 
 }
     }
+    if($paymentType=='A'){
+    // Atome
+    if ( isset( $payload->{'resultCode'} ) ) {
+        if ($payload->{'resultCode'} == '00') {
+                $order->payment_complete($payload->{'gbpReferenceNo'});
+                update_post_meta($order_id, 'Gbprimepay Charge ID', $payload->{'merchantDefined1'});
+                $order->add_order_note(
+                  __( 'GBPrimePay Atome Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
+                  __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $payload->{'gbpReferenceNo'} . PHP_EOL .
+                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'}, array('currency' => ''.$currencyISO))
+                );
+
+// checkout_afterpay_url
+$checkoutmethod = 'atome';
+$checkoutshoprefNo = $ordertxt;
+$checkoutserialID = $payload->{'merchantDefined1'};
+$checkoutID = $payload->{'merchantDefined5'};
+$checkoutgbpReferenceNo = $payload->{'gbpReferenceNo'};
+$checkoutamount = $payload->{'amount'};
+$checkoutdate = $payload->{'date'};
+$checkouttime = $payload->{'time'};
+$url = $checkout_url.'/afterpay/'.$checkoutID;
+$field = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"referenceNo\"\r\n\r\n$referenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"method\"\r\n\r\n$checkoutmethod\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gbpReferenceNo\"\r\n\r\n$checkoutgbpReferenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"amount\"\r\n\r\n$checkoutamount\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"date\"\r\n\r\n$checkoutdate\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"time\"\r\n\r\n$checkouttime\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"shoprefNo\"\r\n\r\n$checkoutshoprefNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"serialID\"\r\n\r\n$checkoutserialID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"checkoutID\"\r\n\r\n$checkoutID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--";
+
+$checkoutReturn = AS_Gbprimepay_API::afterpayCheckout("$url", $field, 'POST');
+
+
+AS_Gbprimepay::log(  'Atome Return Handler: ' .print_r( $checkoutReturn, true ) );
+        }else{
+            if ($order->has_status(array('pending', 'failed'))) {
+                $order->update_status( 'failed', sprintf( __( 'GBPrimePay Atome Payment failed.', 'gbprimepay-payment-gateways' ) ) );
+            }
+        }
+    AS_Gbprimepay::log(  'Atome Callback Handler: ' . print_r( $payload, true ) );
+
+}
+
+    }
+    if($paymentType=='S'){
+    // ShopeePay
+    if ( isset( $payload->{'resultCode'} ) ) {
+        if ($payload->{'resultCode'} == '00') {
+                $order->payment_complete($payload->{'gbpReferenceNo'});
+                update_post_meta($order_id, 'Gbprimepay Charge ID', $payload->{'merchantDefined1'});
+                $order->add_order_note(
+                  __( 'GBPrimePay ShopeePay Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
+                  __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $payload->{'gbpReferenceNo'} . PHP_EOL .
+                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'}, array('currency' => ''.$currencyISO))
+                );
+
+// checkout_afterpay_url
+$checkoutmethod = 'shopeepay';
+$checkoutshoprefNo = $ordertxt;
+$checkoutserialID = $payload->{'merchantDefined1'};
+$checkoutID = $payload->{'merchantDefined5'};
+$checkoutgbpReferenceNo = $payload->{'gbpReferenceNo'};
+$checkoutamount = $payload->{'amount'};
+$checkoutdate = $payload->{'date'};
+$checkouttime = $payload->{'time'};
+$url = $checkout_url.'/afterpay/'.$checkoutID;
+$field = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"referenceNo\"\r\n\r\n$referenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"method\"\r\n\r\n$checkoutmethod\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gbpReferenceNo\"\r\n\r\n$checkoutgbpReferenceNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"amount\"\r\n\r\n$checkoutamount\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"date\"\r\n\r\n$checkoutdate\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"time\"\r\n\r\n$checkouttime\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"shoprefNo\"\r\n\r\n$checkoutshoprefNo\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"serialID\"\r\n\r\n$checkoutserialID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"checkoutID\"\r\n\r\n$checkoutID\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--";
+
+$checkoutReturn = AS_Gbprimepay_API::afterpayCheckout("$url", $field, 'POST');
+
+
+AS_Gbprimepay::log(  'ShopeePay Return Handler: ' .print_r( $checkoutReturn, true ) );
+        }else{
+            if ($order->has_status(array('pending', 'failed'))) {
+                $order->update_status( 'failed', sprintf( __( 'GBPrimePay ShopeePay Payment failed.', 'gbprimepay-payment-gateways' ) ) );
+            }
+        }
+    AS_Gbprimepay::log(  'ShopeePay Callback Handler: ' . print_r( $payload, true ) );
+
+}
+
+    }
     if($paymentType=='V'){
     // Qr Visa
     if ( isset( $payload->{'resultCode'} ) ) {
@@ -494,7 +584,7 @@ AS_Gbprimepay::log(  'QR Code Return Handler: ' .$url.'\r\n\r\n'. print_r( $chec
                 $order->add_order_note(
                   __( 'GBPrimePay QR Visa Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                   __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $payload->{'gbpReferenceNo'} . PHP_EOL .
-                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'})
+                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'}, array('currency' => ''.$currencyISO))
                 );
 
 // checkout_afterpay_url
@@ -532,7 +622,7 @@ AS_Gbprimepay::log(  'QR Visa Return Handler: ' .print_r( $checkoutReturn, true 
                 $order->add_order_note(
                   __( 'GBPrimePay Bill Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                   __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $payload->{'gbpReferenceNo'} . PHP_EOL .
-                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'})
+                  __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($payload->{'amount'}, array('currency' => ''.$currencyISO))
                 );
 
 // checkout_afterpay_url
@@ -566,6 +656,7 @@ AS_Gbprimepay::log(  'Bill Payment Return Handler: ' .$url.'\r\n\r\n'. print_r( 
         $referenceNo = $postData['referenceNo'];
         $paymentType = $postData['paymentType'];
         $order_id = substr($postData['referenceNo'], 7);
+        $currencyISO = AS_Gbprimepay_API::getCurrencyISObyCode($postData['currencyCode']);
         $order = wc_get_order($order_id);
         $ordertxt = '';
         if ($order){$ordertxt = $order->get_id();}
@@ -578,7 +669,7 @@ AS_Gbprimepay::log(  'Bill Payment Return Handler: ' .$url.'\r\n\r\n'. print_r( 
                                     $order->add_order_note(
                                         __( '3-D Secure Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                                         __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
-                                        __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                                        __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'], array('currency' => ''.$currencyISO))
                                     );
 
 // checkout_afterpay_url
@@ -619,7 +710,7 @@ AS_Gbprimepay::log(  'Secure Callback Return Handler: ' .$url.'\r\n\r\n'. print_
                               __( 'GBPrimePay Credit Card Installment Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                               __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
                               __( 'Monthly: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amountPerMonth']) .' x '. $postData['payMonth'] . PHP_EOL .
-                              __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                              __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'], array('currency' => ''.$currencyISO))
                             );
 // checkout_afterpay_url
 $checkoutmethod = 'installment';
@@ -656,7 +747,7 @@ AS_Gbprimepay::log(  'Credit Card Installment Callback Return Handler: ' .$url.'
                         $order->add_order_note(
                           __( 'GBPrimePay QR Wechat Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                           __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
-                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'], array('currency' => ''.$currencyISO))
                         );
 
 // checkout_afterpay_url
@@ -693,7 +784,7 @@ AS_Gbprimepay::log(  'QR Wechat Return Handler: ' .$url.'\r\n\r\n'. print_r( $ch
                         $order->add_order_note(
                           __( 'GBPrimePay Rabbit Line Pay Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                           __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
-                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'], array('currency' => ''.$currencyISO))
                         );
 
 // checkout_afterpay_url
@@ -730,7 +821,7 @@ AS_Gbprimepay::log(  'Rabbit Line Pay Return Handler: ' .$url.'\r\n\r\n'. print_
                         $order->add_order_note(
                           __( 'GBPrimePay TrueMoney Wallet Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                           __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
-                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'], array('currency' => ''.$currencyISO))
                         );
 
 // checkout_afterpay_url
@@ -767,7 +858,7 @@ AS_Gbprimepay::log(  'TrueMoney Wallet Return Handler: ' .$url.'\r\n\r\n'. print
                         $order->add_order_note(
                           __( 'GBPrimePay Mobile Banking Payment Authorized.', 'gbprimepay-payment-gateways' ) . PHP_EOL .
                           __( 'Transaction ID: ', 'gbprimepay-payment-gateways' ) . $postData['gbpReferenceNo'] . PHP_EOL .
-                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'])
+                          __( 'Payment Amount: ', 'gbprimepay-payment-gateways' ) . wc_price($postData['amount'], array('currency' => ''.$currencyISO))
                         );
 
 // checkout_afterpay_url
@@ -817,7 +908,7 @@ $gateways = WC()->payment_gateways->get_payment_gateway_ids();
 echo '<fieldset id="wc-gbprimepay-checkout-form" class="wc-credit-card-form wc-payment-form">';
 if( $gateways ) {
     foreach( $gateways as $gateway ) {
-        $gbpgateway = array('gbprimepay','gbprimepay_installment','gbprimepay_qrcode','gbprimepay_qrcredit','gbprimepay_qrwechat','gbprimepay_barcode');
+        $gbpgateway = array('gbprimepay','gbprimepay_installment','gbprimepay_qrcode','gbprimepay_qrcredit','gbprimepay_qrwechat','gbprimepay_linepay','gbprimepay_truewallet','gbprimepay_mbanking','gbprimepay_atome','gbprimepay_shopeepay','gbprimepay_barcode');
         if(in_array($gateway,$gbpgateway)){
             $echocode = ''."\r\n";
         }
@@ -897,6 +988,27 @@ if( $gateways ) {
                 
                     }
                 
+                  }
+      
+            }
+            if( $gateway == 'gbprimepay_atome') {
+
+                if ($this->payment_settings_atome['enabled'] === 'yes') {
+                    
+                    if((WC()->cart->total >= 20) && ($this->account_settings['environment']=='production')){
+ 
+                $sortGateways[] = 'atome';
+                $sortGatewaysTXT[] = 'Atome';
+                
+                    }
+                
+                  }
+      
+            }
+            if( $gateway == 'gbprimepay_shopeepay') {
+                if ($this->payment_settings_shopeepay['enabled'] === 'yes') {
+                  $sortGateways[] = 'shopeepay';
+                  $sortGatewaysTXT[] = 'ShopeePay';
                   }
       
             }

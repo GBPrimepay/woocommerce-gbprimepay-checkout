@@ -8,6 +8,7 @@ function gbp_instances( $instances ) {
     'PLATFORM' => 'woocommerce',
     'MODE' => 'payment',
     'STATUS' => 'draft',
+    
     'URL_CHECKOUT_TEST' => 'https://checkout.globalprimepay.com',
     'URL_CHECKOUT_LIVE' => 'https://checkout.gbprimepay.com',
 

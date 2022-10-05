@@ -5,13 +5,13 @@
  * Description: GBPrimePay Checkout By GBPrimePay
  * Author: GBPrimePay
  * Author URI: https://www.gbprimepay.com
- * Version: 1.2.0
+ * Version: 1.3.0
  * Text Domain: gbprimepay-payments-gateways
 */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-define( 'AS_GBPRIMEPAY_VERSION', '1.2.0' );
+define( 'AS_GBPRIMEPAY_VERSION', '1.3.0' );
 define( 'AS_GBPRIMEPAY_MIN_PHP_VER', '5.3.0' );
 define( 'AS_GBPRIMEPAY_MIN_WC_VER', '2.5.0' );
 define( 'AS_GBPRIMEPAY_MAIN_FILE', __FILE__ );
@@ -30,8 +30,6 @@ if (!class_exists('AS_Gbprimepay')) {
             return self::$instance;
         }
      		private function __clone() {
-     		}
-     		private function __wakeup() {
      		}
         private static $logging = '';
         public $notices = array();
@@ -590,7 +588,14 @@ add_filter('woocommerce_payment_gateway_get_new_payment_method_option_html_label
             $setting_link = $this->get_setting_link();
             $this->add_admin_notice( 'gbprimepay_prompt_connect', 'notice notice-warning', 'defective', sprintf( __( 'Error!, Missing credentials, GBPrimePay Payments will not work until you <br><br><a href="%s">configure your GB Prime Pay api keys</a>.', 'gbprimepay-payment-gateways' ), $setting_link ) );
             }
-          }
+          }else{
+						$get_as_gbprimepay_version = get_option('as_gbprimepay_version');
+						if ( isset( $get_as_gbprimepay_version ) ) {
+							if($get_as_gbprimepay_version != AS_GBPRIMEPAY_VERSION){
+								self::_update_plugin_version();
+							}
+						}
+					}
         }
    		public static function get_logging() {
    			if ( empty( self::$logging ) ) {
@@ -682,6 +687,8 @@ add_filter('woocommerce_payment_gateway_get_new_payment_method_option_html_label
             include_once(dirname(__FILE__) . '/includes/class-as-gbprimepay-gateway-linepay.php');
             include_once(dirname(__FILE__) . '/includes/class-as-gbprimepay-gateway-truewallet.php');
             include_once(dirname(__FILE__) . '/includes/class-as-gbprimepay-gateway-mbanking.php');
+            include_once(dirname(__FILE__) . '/includes/class-as-gbprimepay-gateway-atome.php');
+            include_once(dirname(__FILE__) . '/includes/class-as-gbprimepay-gateway-shopeepay.php');
             include_once(dirname(__FILE__) . '/includes/class-as-gbprimepay-gateway-barcode.php');
             add_filter( 'woocommerce_payment_gateways', array( $this, 'add_gateways' ) );
         }
@@ -694,6 +701,8 @@ add_filter('woocommerce_payment_gateway_get_new_payment_method_option_html_label
             $methods[] = 'AS_Gateway_Gbprimepay_Linepay';
             $methods[] = 'AS_Gateway_Gbprimepay_Truewallet';
             $methods[] = 'AS_Gateway_Gbprimepay_Mbanking';
+            $methods[] = 'AS_Gateway_Gbprimepay_Atome';
+            $methods[] = 'AS_Gateway_Gbprimepay_Shopeepay';
             $methods[] = 'AS_Gateway_Gbprimepay_Barcode';
             $methods[] = 'AS_Gateway_Gbprimepay_Checkout';
             return $methods;

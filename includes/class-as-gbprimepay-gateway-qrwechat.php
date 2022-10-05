@@ -12,6 +12,7 @@ class AS_Gateway_Gbprimepay_Qrwechat extends WC_Payment_Gateway_eCheck
         $this->init_form_fields();
         // load settings
         $this->init_settings();
+        $this->settings['enabled'] = AS_Gbprimepay_API::_can_enabled($this->settings['enabled']);
         $this->account_settings = get_option('gbprimepay_account_settings');
         $this->payment_settings = get_option('gbprimepay_payment_settings');
         $this->payment_settings_qrwechat = get_option('gbprimepay_payment_settings_qrwechat');

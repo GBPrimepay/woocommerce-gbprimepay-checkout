@@ -14,6 +14,7 @@ function gbprimepay_settings() {
 			add_action( 'woocommerce_settings_' . $this->id,      array( $this, 'output' ) );
 			add_action( 'woocommerce_settings_save_' . $this->id, array( $this, 'save' ) );
 			add_action( 'woocommerce_sections_' . $this->id,      array( $this, 'output_sections' ) );
+			add_action( 'woocommerce_settings__update_currency_' . $this->id,        array( $this, '_update_currency' ), 10, 3);
 		}
 		public function get_sections() {
 			$sections = array(
@@ -148,6 +149,8 @@ echo $echocode;
         $payment_settings_linepay = get_option('gbprimepay_payment_settings_linepay');
         $payment_settings_truewallet = get_option('gbprimepay_payment_settings_truewallet');
         $payment_settings_mbanking = get_option('gbprimepay_payment_settings_mbanking');
+        $payment_settings_atome = get_option('gbprimepay_payment_settings_atome');
+        $payment_settings_shopeepay = get_option('gbprimepay_payment_settings_shopeepay');
         $payment_settings_barcode = get_option('gbprimepay_payment_settings_barcode');
         if(gbp_instances('3D_SECURE_PAYMENT')==TRUE){
             if($account_settings['environment']=='prelive'){
@@ -208,6 +211,16 @@ echo $echocode;
         }else{
           $echoenabledpayment_mbanking = '<span class="woocommerce-input-toggle woocommerce-input-toggle--disabled">No</span>';
         }
+        if ($payment_settings_atome['enabled'] === 'yes') {
+          $echoenabledpayment_atome = '<span class="woocommerce-input-toggle woocommerce-input-toggle--enabled">Yes</span>';
+        }else{
+          $echoenabledpayment_atome = '<span class="woocommerce-input-toggle woocommerce-input-toggle--disabled">No</span>';
+        }
+        if ($payment_settings_shopeepay['enabled'] === 'yes') {
+          $echoenabledpayment_shopeepay = '<span class="woocommerce-input-toggle woocommerce-input-toggle--enabled">Yes</span>';
+        }else{
+          $echoenabledpayment_shopeepay = '<span class="woocommerce-input-toggle woocommerce-input-toggle--disabled">No</span>';
+        }
         if ($payment_settings_barcode['enabled'] === 'yes') {
           $echoenabledpayment_barcode = '<span class="woocommerce-input-toggle woocommerce-input-toggle--enabled">Yes</span>';
         }else{
@@ -225,6 +238,7 @@ echo $echocode;
                         $echocode .= '</tr>'."\r\n";
         							$echocode .= '</thead>'."\r\n";
         							$echocode .= '<tbody>'."\r\n";
+                      
                       $echocode .= '<tr>'."\r\n";
                         $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
                                 $echocode .= '<span id="span-for-active-button">GBPrimePay Checkout</span>'."\r\n";
@@ -235,6 +249,7 @@ echo $echocode;
                                 $echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_checkout">Configuration</a>'."\r\n";
                         $echocode .= '</td>'."\r\n";
                       $echocode .= '</tr>'."\r\n";
+
         								$echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">'.$ccintegration.'</span>'."\r\n";
@@ -245,6 +260,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">Credit Card Installment integration with GBPrimePay</span>'."\r\n";
@@ -255,6 +271,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_installment">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">QR Code integration with GBPrimePay</span>'."\r\n";
@@ -265,6 +282,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_qrcode">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">QR Visa integration with GBPrimePay</span>'."\r\n";
@@ -275,6 +293,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_qrcredit">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">QR Wechat integration with GBPrimePay</span>'."\r\n";
@@ -285,6 +304,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_qrwechat">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">Rabbit Line Pay integration with GBPrimePay</span>'."\r\n";
@@ -295,6 +315,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_linepay">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">TrueMoney Wallet integration with GBPrimePay</span>'."\r\n";
@@ -305,6 +326,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_truewallet">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">Mobile Banking integration with GBPrimePay</span>'."\r\n";
@@ -315,6 +337,32 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_mbanking">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
+
+                        $echocode .= '<tr>'."\r\n";
+                          $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
+        													$echocode .= '<span id="span-for-active-button">Atome integration with GBPrimePay</span>'."\r\n";
+        												$echocode .= '</td>'."\r\n";
+                          $echocode .= '<td class="status" style="text-align: center;">'."\r\n";
+                            $echocode .= $echoenabledpayment_atome;
+                          $echocode .= '</td><td class="setting" style="text-align: center;">'."\r\n";
+        													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_atome">Configuration</a>'."\r\n";
+        									$echocode .= '</td>'."\r\n";
+                        $echocode .= '</tr>'."\r\n";
+
+
+                        $echocode .= '<tr>'."\r\n";
+                          $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
+        													$echocode .= '<span id="span-for-active-button">ShopeePay integration with GBPrimePay</span>'."\r\n";
+        												$echocode .= '</td>'."\r\n";
+                          $echocode .= '<td class="status" style="text-align: center;">'."\r\n";
+                            $echocode .= $echoenabledpayment_shopeepay;
+                          $echocode .= '</td><td class="setting" style="text-align: center;">'."\r\n";
+        													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_shopeepay">Configuration</a>'."\r\n";
+        									$echocode .= '</td>'."\r\n";
+                        $echocode .= '</tr>'."\r\n";
+
+
                         $echocode .= '<tr>'."\r\n";
                           $echocode .= '<td class="name" style="padding-left: 30px;">'."\r\n";
         													$echocode .= '<span id="span-for-active-button">Bill Payment integration with GBPrimePay</span>'."\r\n";
@@ -325,6 +373,7 @@ echo $echocode;
         													$echocode .= '<a href="admin.php?page=wc-settings&amp;tab=checkout&amp;section=gbprimepay_barcode">Configuration</a>'."\r\n";
         									$echocode .= '</td>'."\r\n";
                         $echocode .= '</tr>'."\r\n";
+
                       $echocode .= '</tbody>'."\r\n";
         						$echocode .= '</table>'."\r\n";
             $echocode .= '<br>'."\r\n";
@@ -338,6 +387,20 @@ public function add_admin_notice( $slug, $class, $style, $message ) {
     'style' => $style,
     'message' => $message,
   );
+}
+private static function _chk_currency($currencyCode) {  
+  $get_as_gbprimepay_currency = get_option('as_gbprimepay_currency');
+  if ( isset( $get_as_gbprimepay_currency ) ) {
+    if($get_as_gbprimepay_currency != $currencyCode){
+      self::_update_currency($currencyCode);
+    }
+  }else{    
+      self::_update_currency($currencyCode);
+  }
+  return true;
+}
+private static function _update_currency($currencyCode) {
+  update_option( 'as_gbprimepay_currency', $currencyCode );  
 }
 public function admin_notices() {
   foreach ( (array) $this->notices as $notice_key => $notice ) {
@@ -366,6 +429,17 @@ public function admin_notices() {
 			WC_Admin_Settings::save_fields( $settings );
       $checked_check_save_verified = AS_Gbprimepay_API::check_save_verified();
       self::notice_message($checked_check_save_verified);
+      if($checked_check_save_verified==0){
+        $account_settings = get_option('gbprimepay_account_settings');
+        if ($account_settings['environment'] === 'prelive') {
+            $url = gbp_instances('URL_MERCHANT_TEST');
+        } else {
+            $url = gbp_instances('URL_MERCHANT_LIVE');
+        }
+        $merchant_data = AS_Gbprimepay_API::sendMerchantCurl("$url", [], 'GET');
+        $currencyCode = $merchant_data['currency_code'];
+        self::_chk_currency($currencyCode);
+      }
 		}
 	}
 	return new AS_Gbprimepay_ACCOUNT();

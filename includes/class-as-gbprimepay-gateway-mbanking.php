@@ -16,6 +16,7 @@ class AS_Gateway_Gbprimepay_Mbanking extends WC_Payment_Gateway_eCheck
         $this->init_form_fields();
         // load settings
         $this->init_settings();
+        $this->settings['enabled'] = AS_Gbprimepay_API::_can_enabled($this->settings['enabled']);
         $this->account_settings = get_option('gbprimepay_account_settings');
         $this->payment_settings = get_option('gbprimepay_payment_settings');
         $this->payment_settings_mbanking = get_option('gbprimepay_payment_settings_mbanking');
@@ -40,7 +41,8 @@ class AS_Gateway_Gbprimepay_Mbanking extends WC_Payment_Gateway_eCheck
     public function is_available()
     {
         if ($this->payment_settings_mbanking['enabled'] === 'yes') {
-          if((WC()->cart->total >= 20) && ($this->account_settings['environment']=='production')){
+            $_wc_cart_total = !empty(WC()->cart->total) ? WC()->cart->total : null;
+            if(($_wc_cart_total >= 20) && ($this->account_settings['environment']=='production')){
             // return true;
           if ($this->payment_settings_checkout['enabled'] === 'yes') {
             return false;

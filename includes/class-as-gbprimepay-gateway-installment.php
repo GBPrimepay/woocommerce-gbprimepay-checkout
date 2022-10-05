@@ -16,6 +16,7 @@ class AS_Gateway_Gbprimepay_Installment extends WC_Payment_Gateway_eCheck
         $this->init_form_fields();
         // load settings
         $this->init_settings();
+        $this->settings['enabled'] = AS_Gbprimepay_API::_can_enabled($this->settings['enabled']);
         $this->account_settings = get_option('gbprimepay_account_settings');
         $this->payment_settings = get_option('gbprimepay_payment_settings');
         $this->payment_settings_installment = get_option('gbprimepay_payment_settings_installment');
@@ -43,7 +44,8 @@ class AS_Gateway_Gbprimepay_Installment extends WC_Payment_Gateway_eCheck
           $all_installment_term = $this->payment_settings_installment['kasikorn_installment_term'].', '.$this->payment_settings_installment['krungthai_installment_term'].', '.$this->payment_settings_installment['thanachart_installment_term'].', '.$this->payment_settings_installment['ayudhya_installment_term'].', '.$this->payment_settings_installment['firstchoice_installment_term'].', '.$this->payment_settings_installment['scb_installment_term'].', '.$this->payment_settings_installment['bbl_installment_term'];
           $all_arrterm_check = explode(',',preg_replace('/\s+/', '', $all_installment_term));
           $all_arrterm_pass = (array_filter($all_arrterm_check));
-          if((WC()->cart->total >= 3000) && ((WC()->cart->total/(min($all_arrterm_pass))) >= 500)){
+          $_wc_cart_total = !empty(WC()->cart->total) ? WC()->cart->total : null;
+          if(($_wc_cart_total >= 3000) && (($_wc_cart_total/(min($all_arrterm_pass))) >= 500)){
             // return true;
           if ($this->payment_settings_checkout['enabled'] === 'yes') {
             return false;

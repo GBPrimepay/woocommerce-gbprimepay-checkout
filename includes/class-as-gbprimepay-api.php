@@ -262,11 +262,55 @@ class AS_Gbprimepay_API {
         }
         return $_currencyISO;
       }
+      
+      public static function genCurrencyDATA($checkout_language,$merchant_data){
+      $currency_data = array(); 
+      if ($checkout_language=="English"){    
+          $currency_data = array(
+            "currencyCode" => $merchant_data['currency_code'],
+            "currencySign" => $merchant_data['currency_sign'],
+            "currencyISO" => $merchant_data['currency_iso'],
+          );
+      }else{      
+          $currency_data = array(
+            "currencyCode" => $merchant_data['currency_code_th'],
+            "currencySign" => $merchant_data['currency_sign_th'],
+            "currencyISO" => $merchant_data['currency_iso_th'],
+          );
+      }
+      return $currency_data;
+    }
+    public static function getCurrencySignbyCode($currencyCode){
+        $currencySign = '฿'; 
+        if ($currencyCode=="840"){    
+            $currencySign = '$'; 
+        }
+        return $currencySign;
+      }
+    public static function getCurrencyISObyCode($currencyCode){
+        $currencySign = 'THB'; 
+        if ($currencyCode=="840"){    
+            $currencySign = 'USD'; 
+        }
+        return $currencySign;
+    }
+    public static function _can_enabled($enabled) {  
+      $_as_can_enabled = $enabled;
+      $get_as_gbprimepay_currency = get_option('as_gbprimepay_currency');
+      if ( isset( $get_as_gbprimepay_currency ) ) {
+          if($get_as_gbprimepay_currency == '840'){
+              $_as_can_enabled = 'no';
+          }else{
+              $_as_can_enabled = $enabled;
+          }
+      }
+      return $_as_can_enabled;
+    }
     public static function generateID()
       {
         $microtime = md5(microtime());
         $encoded = self::encode($microtime , self::getDomain());
-        $serial = implode('-', str_split(substr(strtolower($encoded), 0, 32), 5));
+        $serial = implode('-', str_split(substr(strtolower(hash('md4', $encoded)), 0, 32), 5));
         return $serial;
       }
       public static function getMerchantInfo()
