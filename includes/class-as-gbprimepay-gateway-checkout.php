@@ -362,7 +362,7 @@ class AS_Gateway_Gbprimepay_Checkout extends WC_Payment_Gateway_eCheck
                                     array(
                                         'page' => rawurlencode($checkout_url),
                                         'serialID' => rawurlencode($callgenerateID)
-                                    ), WP_PLUGIN_URL."/" . plugin_basename( dirname(__FILE__) ) . '/redirect/checkout.php');
+                                    ), WP_PLUGIN_URL."/" . plugin_basename( dirname(__FILE__) ) . '/redirect/index.php');
 
 
                     
