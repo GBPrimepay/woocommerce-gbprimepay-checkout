@@ -5,13 +5,13 @@
  * Description: GBPrimePay Checkout By GBPrimePay
  * Author: GBPrimePay
  * Author URI: https://www.gbprimepay.com
- * Version: 1.3.0
+ * Version: 1.3.1
  * Text Domain: gbprimepay-payments-gateways
 */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-define( 'AS_GBPRIMEPAY_VERSION', '1.3.0' );
+define( 'AS_GBPRIMEPAY_VERSION', '1.3.1' );
 define( 'AS_GBPRIMEPAY_MIN_PHP_VER', '5.3.0' );
 define( 'AS_GBPRIMEPAY_MIN_WC_VER', '2.5.0' );
 define( 'AS_GBPRIMEPAY_MAIN_FILE', __FILE__ );
